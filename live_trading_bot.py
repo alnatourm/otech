@@ -2,13 +2,14 @@ import os
 import pandas as pd
 from binance.client import Client
 import time
+import argparse
 
 def fetch_historical_data(client, symbol, interval, lookback="30 days ago UTC"):
     """
     Fetches historical klines from Binance and returns a pandas DataFrame.
     """
     try:
-        klines = client.get_historical_klines(symbol, interval, lookback)
+        klines = client.futures_historical_klines(symbol, interval, lookback)
         data = pd.DataFrame(klines, columns=[
             'timestamp', 'open', 'high', 'low', 'close', 'volume',
             'close_time', 'quote_asset_volume', 'number_of_trades',
@@ -35,8 +36,8 @@ def execute_trade(client, symbol, side, quantity):
     Replace with create_order for live trading.
     """
     try:
-        print(f"Submitting test order: {side} {quantity} {symbol}")
-        order = client.create_test_order(
+        print(f"Submitting Futures test order: {side} {quantity} {symbol}")
+        order = client.futures_create_test_order(
             symbol=symbol,
             side=side,
             type=Client.ORDER_TYPE_MARKET,
@@ -50,6 +51,11 @@ def execute_trade(client, symbol, side, quantity):
 
 def run_trading_bot():
     """Main function to run the trading bot."""
+    parser = argparse.ArgumentParser(description='Binance Futures Trading Bot')
+    parser.add_argument('--symbol', type=str, default='BTCUSDT', help='Trading symbol (e.g., BTCUSDT)')
+    args = parser.parse_args()
+    symbol = args.symbol
+
     # It's crucial to securely manage your API keys.
     # Never hardcode them in your script.
     api_key = os.environ.get('BINANCE_API_KEY')
@@ -60,8 +66,8 @@ def run_trading_bot():
         print("Please set the BINANCE_API_KEY and BINANCE_API_SECRET environment variables.")
         return
 
-    client = Client(api_key, api_secret)
-    symbol = 'BTCUSDT'
+    client = Client(api_key, api_secret, testnet=True)
+    client.API_URL = 'https://testnet.binancefuture.com/fapi'
     interval = Client.KLINE_INTERVAL_1DAY
     quantity = 0.001  # Example quantity
 
